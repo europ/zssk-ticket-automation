@@ -104,6 +104,11 @@ Order of the options does not matter. Option values **must exactly match the tra
   python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --headless
   ```
 
+#### Log
+
+![log-example](https://github.com/europ/zssk-ticket-automation/blob/master/example.png "Log Example")
+
+
 ## Help
 
 If you have purchased a wrong ticket you are able to cancel it [here](https://ikvc.slovakrail.sk/esales/refund).
