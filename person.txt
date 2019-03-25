@@ -1,0 +1,4 @@
+name = 'John'
+surname = 'Connor'
+email = 'john.connor@example.com'
+train_card = '1234567'
