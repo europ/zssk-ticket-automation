@@ -10,14 +10,13 @@ The only thing what you are required to do is to launch the script with **exact*
 
 * [python](https://www.python.org/downloads/) >= 3.6.7
 * [geckodriver](https://github.com/mozilla/geckodriver/releases/latest) >= 0.24.0
-* [firefox](https://www.mozilla.org/en-US/firefox/all/) >= 65.0.1
-* pip packages:
-  * flake8 >= 2.5.4
-  * mccabe >= 0.4.0
-  * pep8 >= 1.7.0
-  * pyflakes >= 1.0.0
-  * selenium >= 2.53.2
-  * unidecode >= 0.4.19
+* [firefox](https://www.mozilla.org/en-US/firefox/all/) >= 66.0.2
+* [pip](https://pypi.org/project/pip/) >= 19.0.3
+
+### Python Packages
+
+* [selenium](https://pypi.org/project/selenium/) >= 3.141.0
+* [Unidecode](https://pypi.org/project/Unidecode/) >= 1.0.23
 
 ## Installation
 
@@ -46,7 +45,7 @@ rm --verbose --force geckodriver-v0.24.0-linux64.tar.gz
 git clone https://github.com/europ/zssk-ticket-automation.git
 cd zssk-ticket-automation
 
-# 4) requirements
+# 4) python packages
 python3.6 -m pip install -r requirements.txt
 
 # 5) help test
