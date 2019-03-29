@@ -8,9 +8,9 @@ The only thing what you are required to do is to launch the script with **exact*
 
 ## Requirements
 
-* python >= 3.6.7
-* geckodriver >= 0.24.0
-* firefox >= 65.0.1
+* [python](https://www.python.org/downloads/) >= 3.6.7
+* [geckodriver](https://github.com/mozilla/geckodriver/releases/latest) >= 0.24.0
+* [firefox](https://www.mozilla.org/en-US/firefox/all/) >= 65.0.1
 * pip packages:
   * flake8 >= 2.5.4
   * mccabe >= 0.4.0

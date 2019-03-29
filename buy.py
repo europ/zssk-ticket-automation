@@ -11,7 +11,6 @@ from inspect import getframeinfo, stack
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.support import expected_conditions as EC
@@ -20,6 +19,7 @@ from time import sleep
 
 
 def die(msg,exitcode=1):
+    caller = getframeinfo(stack()[1][0])
     sys.stderr.write('{} {}:{} ERROR: {}\n'.format(
             datetime.datetime.now(),
             caller.filename,
