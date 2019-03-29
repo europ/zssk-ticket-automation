@@ -71,8 +71,15 @@ Order of the options does not matter. Option values **must exactly match the tra
 
 #### Optional
 
+* Help `-h` or `--help`
+  * allowed with any type of option
+  * show help message and exit
 * Headless browser mode `-H` or `--headless`
+  * not allowed with full screen mode
   * web browser without a graphical user interface
+* Full screen browser mode `-F` `--fullscreen`
+  * not allowed with headless mode
+  * web browser in full screen mode
 
 ### Examples
 
@@ -94,13 +101,22 @@ Order of the options does not matter. Option values **must exactly match the tra
   python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019"
 	```
 
-* Headless example
+* Headless mode example
   ```sh
   python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -H
   ```
   or
   ```sh
   python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --headless
+  ```
+
+* Full screen mode example
+  ```sh
+  python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -F
+  ```
+  or
+  ```sh
+  python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --fullscreen
   ```
 
 #### Log

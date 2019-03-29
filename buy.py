@@ -4,18 +4,24 @@
 
 import os
 import sys
+import signal
 import argparse
 import datetime
 
 from inspect import getframeinfo, stack
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from time import sleep
+
+
+def signal_handler(signal, frame):
+    sys.stdout.write("\n\nInterrupt from keyboard.\n")
+    sys.exit(0)
 
 
 def die(msg,exitcode=1):
@@ -70,7 +76,10 @@ def buy_ticket(args):
 
     # FIREFOX OPTIONS
     options = Options();
-    options.headless = args.headless
+
+    # Use headless mode.
+    if args.headless:
+        options.headless = args.headless
 
     # FIREFOX PROFILE
     profile = FirefoxProfile()
@@ -84,7 +93,8 @@ def buy_ticket(args):
     driver = webdriver.Firefox(options=options, firefox_profile=profile)
 
     # Use full screen mode.
-    # driver.maximize_window()
+    if args.fullscreen:
+        driver.maximize_window()
 
     # Logging information
     log_info('Opened {} (version {})'.format(
@@ -352,36 +362,59 @@ def main():
         epilog = (
             'EXAMPLES\n'
             '       python3.6 buy_ticket -h\n'
+            '       python3.6 buy_ticket --help\n'
+            '\n'
             '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019"\n'
+            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019"\n'
+            '\n'
             '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -H\n'
+            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019 --headless"\n'
+            '\n'
+            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -F\n'
+            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019 --fullscreen"'
         ),
         formatter_class = argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
         '--departure',
         '-D',
+        default=None,
         help='Exact departure station.'
     )
     parser.add_argument(
         '--arrival',
         '-A',
+        default=None,
         help='Exact arrival station.'
     )
     parser.add_argument(
         '--time',
         '-t',
+        default=None,
         help='Exact departure time in format: HH:MM.'
     )
     parser.add_argument(
         '--date',
         '-d',
+        default=None,
         help='Exact departure date in format: DD.MM.YYYY.'
     )
-    parser.add_argument(
+
+    # arguments that are not allowed together at the same time
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         '-H',
         '--headless',
+        default=False,
         action='store_true',
         help='Run browser in a headless mode.'
+    )
+    group.add_argument(
+        '-F',
+        '--fullscreen',
+        default=False,
+        action='store_true',
+        help='Run browser in a full screen mode.'
     )
 
     # Argument parsing.
@@ -413,8 +446,14 @@ def main():
     # Headless browser mode
     log_info('HEADLESS = {}'.format(args.headless))
 
+    # Full screen browser mode
+    log_info('FULLSCREEN = {}'.format(args.fullscreen))
+
     # Buy ticket
-    buy_ticket(args)
+    try:
+        buy_ticket(args)
+    except WebDriverException:
+        die('An unexpected error occurred when buying a ticket!', 100)
 
     # Info
     log_info("Terminating {}".format(str(__file__)))
@@ -424,4 +463,5 @@ def main():
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal_handler)
     main()
