@@ -58,6 +58,10 @@ Set up your account credentials in `person.txt` and launch the script with the c
 
 ### Options
 
+```
+[-h] --departure DEPARTURE --arrival ARRIVAL --time TIME --date DATE [--verbose] [-H | -F]
+```
+
 Order of the options does not matter. Option values **must exactly match the train details** (time, date and stations). It is recommended to use verbose mode option in case of diagnostics.
 
 #### Mandatory
@@ -70,10 +74,8 @@ Order of the options does not matter. Option values **must exactly match the tra
 #### Optional
 
 * Help `-h` or `--help`
-  * allowed with any type of option
   * show help message and exit
 * Verbose mode `-v` or `--verbose`
-  * allowed with any type of option
   * explain what is being done
 * Headless browser mode `-H` or `--headless`
   * not allowed with full screen mode

@@ -370,14 +370,14 @@ def main():
             '       python3.6 buy_ticket -h\n'
             '       python3.6 buy_ticket --help\n'
             '\n'
-            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019"\n'
-            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019"\n'
+            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -v\n'
+            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --verbose\n'
             '\n'
-            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -H\n'
-            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019 --headless"\n'
+            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -H -v\n'
+            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --headless --verbose\n'
             '\n'
-            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -F\n'
-            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019 --fullscreen"'
+            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -F -v\n'
+            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --fullscreen --verbose'
         ),
         formatter_class = argparse.RawDescriptionHelpFormatter
     )
@@ -385,24 +385,28 @@ def main():
         '--departure',
         '-D',
         default=None,
+        required=True,
         help='Exact departure station.'
     )
     parser.add_argument(
         '--arrival',
         '-A',
         default=None,
+        required=True,
         help='Exact arrival station.'
     )
     parser.add_argument(
         '--time',
         '-t',
         default=None,
+        required=True,
         help='Exact departure time in format: HH:MM.'
     )
     parser.add_argument(
         '--date',
         '-d',
         default=None,
+        required=True,
         help='Exact departure date in format: DD.MM.YYYY.'
     )
     parser.add_argument(
