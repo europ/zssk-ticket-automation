@@ -60,7 +60,7 @@ Set up your account credentials in `person.txt` and launch the script with the c
 
 ### Options
 
-Order of the options does not matter. Option values **must exactly match the train details** (time, date and stations).
+Order of the options does not matter. Option values **must exactly match the train details** (time, date and stations). It is recommended to use verbose mode option in case of diagnostics.
 
 #### Mandatory
 
@@ -74,6 +74,9 @@ Order of the options does not matter. Option values **must exactly match the tra
 * Help `-h` or `--help`
   * allowed with any type of option
   * show help message and exit
+* Verbose mode `-v` or `--verbose`
+  * allowed with any type of option
+  * explain what is being done
 * Headless browser mode `-H` or `--headless`
   * not allowed with full screen mode
   * web browser without a graphical user interface
@@ -94,29 +97,29 @@ Order of the options does not matter. Option values **must exactly match the tra
 
 * Usage example
 	```sh
-	python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019"
+	python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -v
   ```
   or
   ```sh
-  python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019"
+  python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --verbose
 	```
 
 * Headless mode example
   ```sh
-  python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -H
+  python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -H -v
   ```
   or
   ```sh
-  python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --headless
+  python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --headless --verbose
   ```
 
 * Full screen mode example
   ```sh
-  python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -F
+  python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -F -v
   ```
   or
   ```sh
-  python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --fullscreen
+  python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --fullscreen --verbose
   ```
 
 #### Log
