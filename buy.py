@@ -24,12 +24,13 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
-def die(msg,exitcode=1):
+def die(msg, exitcode=1, type='ERROR'):
     caller = getframeinfo(stack()[1][0])
-    sys.stderr.write('{} {}:{} ERROR: {}\n'.format(
+    sys.stderr.write('{} {}:{} {}: {}\n'.format(
             datetime.datetime.now(),
             caller.filename,
             caller.lineno,
+            str(type).upper(),
             msg
         )
     )
@@ -40,14 +41,14 @@ def is_date(msg):
     try:
         datetime.datetime.strptime(msg, '%d.%m.%Y')
     except ValueError:
-        die('Wrong date option!',2)
+        die('Wrong date option!', exitcode=2)
 
 
 def is_time(msg):
     try:
         datetime.datetime.strptime(msg, '%H:%M')
     except ValueError:
-        die('Wrong time option!',3)
+        die('Wrong time option!', exitcode=3)
 
 
 def log_info(msg):
@@ -132,7 +133,7 @@ def buy_ticket(args):
            )
         )
         driver.close()
-        die('Page loading failure.',1)
+        die('Page loading failure.', exitcode=1)
 
     sleep(1)
 
@@ -435,13 +436,13 @@ def main():
     if isinstance(args.departure, str):
         log_info('DEPARTURE = {}'.format(args.departure))
     else:
-        die('Wrong departure option!',4)
+        die('Wrong departure option!', exitcode=4)
 
     # Arrival destination check
     if isinstance(args.arrival, str):
         log_info('ARRIVAL = {}'.format(args.arrival))
     else:
-        die('Wrong arrival option!',5)
+        die('Wrong arrival option!', exitcode=5)
 
     # Headless browser mode
     log_info('HEADLESS = {}'.format(args.headless))
@@ -453,7 +454,7 @@ def main():
     try:
         buy_ticket(args)
     except WebDriverException:
-        die('An unexpected error occurred when buying a ticket!', 100)
+        die('An unexpected error occurred when buying a ticket!', exitcode=101)
 
     # Info
     log_info("Terminating {}".format(str(__file__)))
@@ -464,4 +465,7 @@ def main():
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
-    main()
+    try:
+        main()
+    except Exception as e:
+        die(e.__str__(), exitcode=100, type='EXCEPTION')
