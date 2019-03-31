@@ -24,9 +24,7 @@ The only thing what you are required to do is to launch the script with **exact*
 
 #### Ubuntu 16.04.6
 
-1. Set your account credentials in `person.txt`.
-
-2. Initialize the environment via these commands:
+1. Initialize the environment via these commands:
 
 ```sh
 # 1) python3.6 + pip3
@@ -52,7 +50,7 @@ python3.6 -m pip install -r requirements.txt
 python3.6 buy.py --help
 ```
 
-3. See [*Usage*](https://github.com/europ/zssk-ticket-automation#usage) section.
+2. See [*Usage*](https://github.com/europ/zssk-ticket-automation#usage) section.
 
 ## Usage
 
