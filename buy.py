@@ -2,11 +2,13 @@
 # coding=UTF-8
 
 
-import os
-import sys
-import signal
 import argparse
 import datetime
+import logging
+import os
+import signal
+import sys
+
 
 from enum import Enum
 from inspect import getframeinfo, stack
@@ -20,53 +22,43 @@ from selenium.webdriver.support.ui import WebDriverWait
 from time import sleep
 
 
-class LogType(Enum):
-    INFO = 'INFO'
-    ERROR = 'ERROR'
+class Logger(logging.Logger):
+
+    def __init__(self, name, level = logging.NOTSET):
+        return super(Logger, self).__init__(name, level)
+
+    def error(self, msg, *args, **kwargs):
+        logging.error(msg, *args, **kwargs)
+        sys.exit(1)
+
+    def exception(self, msg, *args, **kwargs):
+        logging.exception(msg, *args, **kwargs)
+        sys.exit(2)
 
 
-def exit(msg, exitcode=1, type=LogType.ERROR):
-    log(msg, type=type)
-    sys.exit(exitcode)
-
-
-def log(msg, type=LogType.INFO):
-    if args.verbose or type == LogType.ERROR:
-        caller = getframeinfo(stack()[1][0])
-        print('{} {}:{} {}: {}'.format(
-                datetime.datetime.now(),
-                caller.filename,
-                caller.lineno,
-                type.name,
-                msg
-            ),
-            file = sys.stderr if type == LogType.ERROR else sys.stdout,
-            flush = True,
-            end = '\n'
-        )
-    else:
-        pass
-
-
+# handling a signal capture routine
 def signal_handler(signal, frame):
     sys.stdout.write("\n\nInterrupt from keyboard.\n")
     sys.exit(0)
 
 
-def is_date(msg):
+# check if string is date
+def is_date(string):
     try:
-        datetime.datetime.strptime(msg, '%d.%m.%Y')
+        datetime.datetime.strptime(string, '%d.%m.%Y')
     except ValueError:
-        exit('Wrong date option!', exitcode=2)
+        logger.error('Wrong date option!')
 
 
-def is_time(msg):
+# check if string is time
+def is_time(string):
     try:
-        datetime.datetime.strptime(msg, '%H:%M')
+        datetime.datetime.strptime(string, '%H:%M')
     except ValueError:
-        exit('Wrong time option!', exitcode=3)
+        logger.error('Wrong time option!')
 
 
+# user credential loader from file
 def load_user_credentials(filename):
     import imp
     f = open(filename)
@@ -75,39 +67,46 @@ def load_user_credentials(filename):
     return credentials
 
 
+# core function providing the ticket buying
 def buy_ticket():
 
-    # FIREFOX DESTINATION FOLDER
-    folder = os.path.dirname(os.path.realpath(__file__))
 
-    # FIREFOX OPTIONS
+    # Firefox options configuration
     options = Options();
+    options.headless = args.headless
+    logger.info('FirefoxOptions: headless = "{}"'.format(args.headless))
 
-    # Use headless mode.
-    if args.headless:
-        options.headless = args.headless
 
-    # FIREFOX PROFILE
+    # Firefox profile configuration
     profile = FirefoxProfile()
-    profile.set_preference('browser.download.folderList',2);
-    profile.set_preference('browser.download.manager.showWhenStarting', False);
-    profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'application/octet-stream,application/vnd.ms-excel');
-    profile.set_preference('browser.download.dir',str(folder));
-    log('FirefoxProfile: "browser.download.dir" = "{}"'.format(str(folder)))
 
-    # Launch Firefox web browser.
+    value = 2
+    profile.set_preference('browser.download.folderList', value)
+    logger.info('FirefoxProfile: browser.download.folderList = "{}"'.format(value))
+
+    value = False
+    profile.set_preference('browser.download.manager.showWhenStarting', value)
+    logger.info('FirefoxProfile: browser.download.manager.showWhenStarting = {}'.format(value))
+
+    value = 'application/octet-stream,application/vnd.ms-excel'
+    profile.set_preference('browser.helperApps.neverAsk.saveToDisk', value)
+    logger.info('FirefoxProfile: browser.helperApps.neverAsk.saveToDisk = "{}"'.format(value))
+
+    value = str(os.path.dirname(os.path.realpath(__file__)))
+    profile.set_preference('browser.download.dir', value);
+    logger.info('FirefoxProfile: browser.download.dir = "{}"'.format(value))
+
+
+    # Firefox web browser launch
     driver = webdriver.Firefox(options=options, firefox_profile=profile)
 
-    # Use full screen mode.
+    # Use full screen mode if enabled.
+    logger.info('FirefoxWebdriver: fullscreen = "{}"'.format(args.fullscreen))
     if args.fullscreen:
         driver.maximize_window()
 
-    # Logging information
-    log('Opened {} (version {})'.format(
-            driver.capabilities['browserName'],
-            driver.capabilities['browserVersion']
-        )
-    )
+    # Firefox version
+    logger.info('Firefox: version = "{}"'.format(driver.capabilities['browserVersion']))
 
     # Sets a sticky timeout to implicitly wait for an element to be found, or a command to complete.
     driver.implicitly_wait(30)
@@ -116,7 +115,7 @@ def buy_ticket():
     driver.get('https://ikvc.slovakrail.sk/esales/search')
 
     # Info
-    log('Loading page "Vyhľadanie spojenia"')
+    logger.info('Loading page "Vyhľadanie spojenia"')
 
     try:
         delay = 30  # wait seconds for web page to load, added more second
@@ -128,22 +127,22 @@ def buy_ticket():
         )
 
         # Logging information
-        log('Loaded page "Vyhľadanie spojenia"')
+        logger.info('Loaded page "Vyhľadanie spojenia"')
 
     except TimeoutException:
-        log('Loading took too much time.')
-        log('Closed {} (version {}).'.format(
+        logger.info('Loading took too much time.')
+        logger.info('Closed {} (version {}).'.format(
                driver.capabilities['browserName'],
                driver.capabilities['browserVersion']
            )
         )
         driver.close()
-        exit('Page loading failure.', exitcode=1)
+        logger.error('Page loading failure.')
 
     sleep(1)
 
     # Info
-    log('Page title is "{}".'.format(driver.title))
+    logger.info('Page title is "{}".'.format(driver.title))
 
     # Check if 'ZSSK' is in the page title
     assert 'ZSSK' in driver.title
@@ -155,7 +154,7 @@ def buy_ticket():
     driver.find_element_by_xpath(
         '/html/body/div[1]/div/div[2]/div[3]/div/div/form/div[1]/div/div[1]/div[1]/div[1]/ul/li/a'
     ).click
-    log('Filling "Odkiaľ" in "Vyhľadanie spojenia" with "{}".'.format(args.departure))
+    logger.info('Filling "Odkiaľ" in "Vyhľadanie spojenia" with "{}".'.format(args.departure))
     sleep(0.5)
 
     # TO
@@ -165,7 +164,7 @@ def buy_ticket():
     driver.find_element_by_xpath(
         '/html/body/div[1]/div/div[2]/div[3]/div/div/form/div[1]/div/div[1]/div[1]/div[3]/ul/li/a'
     ).click
-    log('Filling "Kam" in "Vyhľadanie spojenia" with "{}".'.format(args.arrival))
+    logger.info('Filling "Kam" in "Vyhľadanie spojenia" with "{}".'.format(args.arrival))
     sleep(0.5)
 
     # DATE
@@ -173,7 +172,7 @@ def buy_ticket():
     elem_date.clear()
     elem_date.send_keys(args.date)
     driver.find_element_by_xpath('//html').click();
-    log('Filling "Dátum cesty tam" in "Vyhľadanie spojenia" with "{}".'.format(args.date))
+    logger.info('Filling "Dátum cesty tam" in "Vyhľadanie spojenia" with "{}".'.format(args.date))
     sleep(0.5)
 
     # TIME
@@ -181,91 +180,91 @@ def buy_ticket():
     elem_time.clear()
     elem_time.send_keys(args.time)
     driver.find_element_by_xpath('//html').click();
-    log('Filling "Odchod" in "Vyhľadanie spojenia" with "{}".'.format(args.time))
+    logger.info('Filling "Odchod" in "Vyhľadanie spojenia" with "{}".'.format(args.time))
     sleep(0.5)
 
-    log('Filled train credentials in "Vyhľadanie spojenia".')
+    logger.info('Filled train credentials in "Vyhľadanie spojenia".')
 
     # CONFIRM
     driver.find_element_by_id('actionSearchConnectionButton').click()
-    log('Clicked on "Vyhľadať spojenie".')
+    logger.info('Clicked on "Vyhľadať spojenie".')
     sleep(2)
 
     # CLICK ON FIRST
-    driver.find_element_by_css_selector(
-        'div.connection-group:nth-child(2) > div:nth-child(1)'
+    driver.find_element_by_xpath(
+        '/html/body/div[1]/div/div[2]/div[3]/div/span/div/form/div/div[2]/div/div[2]/div/div/div/div[1]/div[1]'
     ).click()
-    log('Clicked on first train.')
+    logger.info('Clicked on first train.')
     sleep(1)
 
     # BUY TICKET
     driver.find_element_by_xpath(
-        '//*[@id="dayGroupLoop:0:eSalesConnectionLoop:0:j_idt302"]'
+        '//*[@id="dayGroupLoop:0:eSalesConnectionLoop:0:j_idt323"]'
     ).click()
-    log('Clicked on "Kúpiť lístok".')
+    logger.info('Clicked on "Kúpiť lístok".')
     sleep(1)
 
     # PASSENGER TYPE SELECTION
     driver.find_element_by_xpath(
         '/html/body/div[1]/div/div[2]/div[3]/span/div/div[1]/form/div/div/div/div/div/div/div[1]/div[1]/div/div/div/div/a[1]/span[2]'
     ).click()
-    log('Choosing passenger type.')
+    logger.info('Choosing passenger type.')
     sleep(1)
 
     # JUNIOR SELECTION
     driver.find_element_by_xpath(
         '/html/body/div[1]/div/div[2]/div[3]/span/div/div[1]/form/div/div/div/div/div/div/div[1]/div[1]/div/div/div[1]/div/a[1]/ul/li[3]'
     ).click()
-    log('Selected "Mladý (16 - 25 r.)".')
+    logger.info('Selected "Mladý (16 - 25 r.)".')
     sleep(1)
 
     # DISCOUNT SELECTION
     driver.find_element_by_xpath(
         '/html/body/div[1]/div/div[2]/div[3]/span/div/div[1]/form/div/div/div/div/div/div/div[1]/div[1]/div/div/div/div/a[2]/span[2]'
     ).click()
-    log('Choosing card type.')
+    logger.info('Choosing card type.')
     sleep(1)
 
     # CARD SELECTION
     driver.find_element_by_xpath(
-        '/html/body/div[1]/div/div[2]/div[3]/span/div/div[1]/form/div/div/div/div/div/div/div[1]/div[1]/div/div/div[1]/div/a[2]/ul/li[2]'
+        '/html/body/div[1]/div/div[2]/div[3]/span/div/div[1]/form/div/div/div/div/div/div/div[1]/div[1]/div/div/div[1]/div/a[2]/ul/li[4]'
     ).click()
-    log('Selected "Preukaz pre žiaka/Študenta".')
+    logger.info('Selected "Preukaz pre žiaka/Študenta".')
     sleep(1)
 
     # ENABLED OPTION FOR FREE TICKET
     driver.find_element_by_xpath(
         '/html/body/div[1]/div/div[2]/div[3]/span/div/div[1]/form/div/div/div/div/div/div/div[1]/div[1]/div/div/div[2]/div/div/label'
     ).click()
-    log('Checkbox enabled for "Nárok na bezplatnú prepravu".')
+    logger.info('Checkbox enabled for "Nárok na bezplatnú prepravu".')
     sleep(1)
 
     # CONTINUE
     driver.find_element_by_xpath(
         '//*[@id="actionIndividualContinue"]'
     ).click()
-    log('Clicked on "Pokračovať" at "Voľba cestujúcich".')
-    sleep(3)
+    logger.info('Clicked on "Pokračovať" at "Voľba cestujúcich".')
+    sleep(7.5)
 
     # CONTINUE
     driver.find_element_by_xpath(
-        '//*[@id="ticketsForm:connection-offer:final-price:j_idt198"]'
+        '//*[@id="ticketsForm:connection-offer:final-price:j_idt219"]'
     ).click()
-    log('Clicked on "Pokračovať" at "Voľba cestovného lístka".')
-    sleep(1)
+    logger.info('Clicked on "Pokračovať" at "Voľba cestovného lístka".')
+    sleep(7.5)
 
     # CONTINUE
     driver.find_element_by_xpath(
-        '//*[@id="ticketsForm:j_idt97"]'
+        '//*[@id="ticketsForm:j_idt118"]'
     ).click()
-    log('Clicked on "Pokračovať" at "Doplnkové služby".')
-    sleep(1)
+    logger.info('Clicked on "Pokračovať" at "Doplnkové služby".')
+    sleep(10)
 
     # CONTINUE
     driver.find_element_by_xpath(
-        '//*[@id="cartForm:j_idt284"]'
+        '//*[@id="cartForm:j_idt305"]'
     ).click()
-    log('Clicked on "Pokračovať" at "Obsah košíka (1)".')
+    logger.info('Clicked on "Pokračovať" at "Obsah košíka (1)".')
     sleep(1)
 
     # LOAD PERSONAL INFORMATION
@@ -275,70 +274,70 @@ def buy_ticket():
     email = driver.find_element_by_id('email')
     email.clear()
     email.send_keys(person.email)
-    log('Filling "Váš e-mail" at "Osobné údaje (2)".')
+    logger.info('Filling "Váš e-mail" at "Osobné údaje (2)".')
 
     # FILL NAME
     name = driver.find_element_by_id('cartItemLoop:0:connectionPersonal:passengerLoop:0:firstname')
     name.clear()
     name.send_keys(person.name)
-    log('Filling "Meno" at "Osobné údaje (2)".')
+    logger.info('Filling "Meno" at "Osobné údaje (2)".')
 
     # FILL SURNAME
     surname = driver.find_element_by_id('cartItemLoop:0:connectionPersonal:passengerLoop:0:lastname')
     surname.clear()
     surname.send_keys(person.surname)
-    log('Filling "Priezvisko" at "Osobné údaje (2)".')
+    logger.info('Filling "Priezvisko" at "Osobné údaje (2)".')
 
     # FILL REGISTRATION NUMBER
     card_number = driver.find_element_by_id('cartItemLoop:0:connectionPersonal:passengerLoop:0:cislo-registracie-p1')
     card_number.clear()
     card_number.send_keys(person.train_card)
-    log('Filling "Číslo registrácie:" at "Osobné údaje (2)".')
+    logger.info('Filling "Číslo registrácie:" at "Osobné údaje (2)".')
 
-    log('All personal informations filled at "Osobné údaje (2)".')
+    logger.info('All personal informations filled at "Osobné údaje (2)".')
 
     # CONTINUE
     driver.find_element_by_xpath(
-        '//*[@id="j_idt177"]'
+        '//*[@id="j_idt198"]'
     ).click()
-    log('Clicked on "Pokračovať" at "Osobné údaje (2)".')
+    logger.info('Clicked on "Pokračovať" at "Osobné údaje (2)".')
     sleep(1)
 
     # I AGREE WITH THE TERMS AND CONDITIONS
     driver.find_element_by_xpath(
         '/html/body/div[1]/div/div[2]/div[3]/div[2]/div/form/div/div/div[1]/div/div/div/label'
     ).click()
-    log('Checkbox enabled for "Súhlasím s obchodnými podmienkami " at "Výber platby (3)".')
+    logger.info('Checkbox enabled for "Súhlasím s obchodnými podmienkami " at "Výber platby (3)".')
     sleep(1)
 
     # CONTINUE
     driver.find_element_by_xpath(
-        '//*[@id="j_idt107"]'
+        '//*[@id="j_idt128"]'
     ).click()
-    log('Clicked on "Pokračovať" at "Výber platby (3)".')
+    logger.info('Clicked on "Pokračovať" at "Výber platby (3)".')
     sleep(1)
 
     # PAY
     driver.find_element_by_xpath(
-        '//*[@id="cartForm:j_idt240"]'
+        '//*[@id="cartForm:j_idt261"]'
     ).click()
-    log('Clicked on "Zaplatiť" at "Súhrn (4)".')
+    logger.info('Clicked on "Zaplatiť" at "Súhrn (4)".')
     sleep(1)
 
     """
     TODO
 
     # DOWNLOAD PDF
-    log('DOWNLOAD: Clicked on "Uložiť lístok".')
+    logger.info('DOWNLOAD: Clicked on "Uložiť lístok".')
     driver.find_element_by_xpath(
         '/html/body/div[1]/div/div[2]/div[3]/div[2]/div/form/div/div/div[3]/div[1]/a'
     ).click()
 
-    log('DOWNLOAD: PDF downloaded to "{}".'.format(str(folder)))
+    logger.info('DOWNLOAD: PDF downloaded to "{}".'.format(str(folder)))
     """
 
     # Waiting 10 seconds
-    log('Waiting 10 seconds before closing {} (version {}).'.format(
+    logger.info('Waiting 10 seconds before closing {} (version {}).'.format(
             driver.capabilities['browserName'],
             driver.capabilities['browserVersion']
         )
@@ -349,7 +348,7 @@ def buy_ticket():
     driver.close()
 
     # Info
-    log('Closed {} (version {}).'.format(
+    logger.info('Closed {} (version {}).'.format(
             driver.capabilities['browserName'],
             driver.capabilities['browserVersion']
         )
@@ -367,17 +366,17 @@ def main():
         ),
         epilog = (
             'EXAMPLES\n'
-            '       python3.6 buy_ticket -h\n'
-            '       python3.6 buy_ticket --help\n'
+            '       python3.6 buy.py -h\n'
+            '       python3.6 buy.py --help\n'
             '\n'
-            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -v\n'
-            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --verbose\n'
+            '       python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -v\n'
+            '       python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --verbose\n'
             '\n'
-            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -H -v\n'
-            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --headless --verbose\n'
+            '       python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -H -v\n'
+            '       python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --headless --verbose\n'
             '\n'
-            '       python3.6 buy_ticket.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -F -v\n'
-            '       python3.6 buy_ticket.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --fullscreen --verbose'
+            '       python3.6 buy.py -D "Bratislava hl.st." -A "Kúty" -t "05:16" -d "18.03.2019" -F -v\n'
+            '       python3.6 buy.py --departure "Bratislava hl.st." --arrival "Kúty" --time "05:16" --date "18.03.2019" --fullscreen --verbose'
         ),
         formatter_class = argparse.RawDescriptionHelpFormatter
     )
@@ -434,55 +433,50 @@ def main():
         help='Run browser in a full screen mode.'
     )
 
-    # Argument parsing.
     global args
     args = parser.parse_args()
 
-    # Info
-    log('Running {}'.format(str(__file__)))
+    if args.verbose:
+        logging.getLogger().setLevel(logging.INFO)
 
     # Date check
     is_date(args.date)
-    log('DATE = {}'.format(args.date))
+    logger.info('value DATE = "{}"'.format(args.date))
 
     # Time check
     is_time(args.time)
-    log('TIME = {}'.format(args.time))
+    logger.info('value TIME = "{}"'.format(args.time))
 
     # Departure destination check
     if isinstance(args.departure, str):
-        log('DEPARTURE = {}'.format(args.departure))
+        logger.info('value DEPARTURE = "{}"'.format(args.departure))
     else:
-        exit('Wrong departure option!', exitcode=4)
+        logger.error('Wrong departure option!')
 
     # Arrival destination check
     if isinstance(args.arrival, str):
-        log('ARRIVAL = {}'.format(args.arrival))
+        logger.info('value ARRIVAL = "{}"'.format(args.arrival))
     else:
-        exit('Wrong arrival option!', exitcode=5)
+        logger.error('Wrong arrival option!')
 
-    # Headless browser mode
-    log('HEADLESS = {}'.format(args.headless))
-
-    # Full screen browser mode
-    log('FULLSCREEN = {}'.format(args.fullscreen))
-
-    # Buy ticket
+    # Buy the specified ticket
     try:
         buy_ticket()
     except WebDriverException:
-        exit('An unexpected error occurred when buying a ticket!', exitcode=101)
-
-    # Info
-    log("Terminating {}".format(str(__file__)))
-
-    # Terminate the program with exit status 0.
-    sys.exit(0)
+        logger.exception('An exception raised while buying a ticket!')
 
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
-    try:
-        main()
-    except Exception as e:
-        exit(e.__str__(), exitcode=100, type='EXCEPTION')
+
+    logging.setLoggerClass(Logger)
+    logging.basicConfig(
+        format='%(asctime)-19s | %(pathname)s:%(lineno)-3d | %(levelname)-5s | %(message)s',
+        datefmt='%d-%m-%Y %H:%M:%S'
+    )
+
+    logger = logging.getLogger("Logger")
+
+    main()
+    logger.info("Successful termination.")
+    sys.exit(0)
